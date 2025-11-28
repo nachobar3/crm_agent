@@ -83,15 +83,17 @@ OPENAI_API_KEY=tu_openai_api_key_aqui
 
 ### 6. Configurar Google Sheets API
 
-El archivo `asociate-f8e54014d9ea.json` ya contiene las credenciales del service account. 
+**🔐 IMPORTANTE:** El archivo de credenciales de Google Cloud **NO está en el repositorio** por seguridad.
 
-Para usar tu propia cuenta:
+Necesitas obtener tu propio archivo JSON:
 1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
 2. Crea un nuevo proyecto o selecciona uno existente
 3. Habilita la API de Google Sheets
 4. Crea credenciales de "Service Account"
-5. Descarga el archivo JSON y reemplaza `asociate-f8e54014d9ea.json`
+5. Descarga el archivo JSON y guárdalo en la raíz del proyecto
 6. **Importante**: Comparte tu Google Sheet con el email del service account (está en el JSON como `client_email`)
+
+**📖 Guía detallada:** Ver [`CREDENTIALS_SETUP.md`](CREDENTIALS_SETUP.md) para instrucciones completas
 
 ## ▶️ Uso
 
