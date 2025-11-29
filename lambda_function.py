@@ -130,8 +130,6 @@ Usa /help para ver más ejemplos.
                 await voice_file.download_to_drive(temp_path)
             
             # Transcribe audio
-            await update.message.reply_text("🎤 Transcribiendo audio...")
-            
             with open(temp_path, 'rb') as audio_file:
                 transcript = openai_client.audio.transcriptions.create(
                     model="whisper-1",
@@ -142,16 +140,20 @@ Usa /help para ver más ejemplos.
             # Clean up temp file
             os.unlink(temp_path)
             
-            transcribed_text = transcript.text
-            await update.message.reply_text(f"📝 Transcripción: {transcribed_text}")
-            
             # Process with agent
+            transcribed_text = transcript.text
             response = agent.process_query(transcribed_text)
-            await update.message.reply_text(response)
+            
+            # Send single combined response
+            combined_response = f"📝 Transcripción: {transcribed_text}\n\n{response}"
+            await update.message.reply_text(combined_response)
             
         except Exception as e:
-            error_message = f"❌ Error al procesar el audio: {str(e)}"
-            await update.message.reply_text(error_message)
+            error_message = f"❌ Error: {str(e)}"
+            try:
+                await update.message.reply_text(error_message)
+            except:
+                pass
             print(f"Error processing voice: {e}")
     
     async def handle_audio(update: Update, context):
@@ -164,8 +166,7 @@ Usa /help para ver más ejemplos.
                 temp_path = temp_audio.name
                 await audio_file.download_to_drive(temp_path)
             
-            await update.message.reply_text("🎤 Transcribiendo audio...")
-            
+            # Transcribe audio
             with open(temp_path, 'rb') as audio:
                 transcript = openai_client.audio.transcriptions.create(
                     model="whisper-1",
@@ -175,16 +176,20 @@ Usa /help para ver más ejemplos.
             
             os.unlink(temp_path)
             
-            transcribed_text = transcript.text
-            await update.message.reply_text(f"📝 Transcripción: {transcribed_text}")
-            
             # Process with agent
+            transcribed_text = transcript.text
             response = agent.process_query(transcribed_text)
-            await update.message.reply_text(response)
+            
+            # Send single combined response
+            combined_response = f"📝 Transcripción: {transcribed_text}\n\n{response}"
+            await update.message.reply_text(combined_response)
             
         except Exception as e:
-            error_message = f"❌ Error al procesar el audio: {str(e)}"
-            await update.message.reply_text(error_message)
+            error_message = f"❌ Error: {str(e)}"
+            try:
+                await update.message.reply_text(error_message)
+            except:
+                pass
             print(f"Error processing audio: {e}")
     
     # Register handlers
