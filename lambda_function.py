@@ -112,9 +112,6 @@ Usa /help para ver más ejemplos.
         """Handle text messages"""
         user_message = update.message.text
         
-        # Show typing indicator
-        await update.message.chat.send_action("typing")
-        
         # Process with agent
         response = agent.process_query(user_message)
         
@@ -124,8 +121,6 @@ Usa /help para ver más ejemplos.
     async def handle_voice(update: Update, context):
         """Handle voice messages"""
         try:
-            await update.message.chat.send_action("typing")
-            
             # Download voice file
             voice_file = await update.message.voice.get_file()
             
@@ -151,7 +146,6 @@ Usa /help para ver más ejemplos.
             await update.message.reply_text(f"📝 Transcripción: {transcribed_text}")
             
             # Process with agent
-            await update.message.chat.send_action("typing")
             response = agent.process_query(transcribed_text)
             await update.message.reply_text(response)
             
@@ -163,8 +157,6 @@ Usa /help para ver más ejemplos.
     async def handle_audio(update: Update, context):
         """Handle audio files"""
         try:
-            await update.message.chat.send_action("typing")
-            
             audio_file = await update.message.audio.get_file()
             
             file_extension = os.path.splitext(audio_file.file_path)[1] or '.mp3'
@@ -186,7 +178,7 @@ Usa /help para ver más ejemplos.
             transcribed_text = transcript.text
             await update.message.reply_text(f"📝 Transcripción: {transcribed_text}")
             
-            await update.message.chat.send_action("typing")
+            # Process with agent
             response = agent.process_query(transcribed_text)
             await update.message.reply_text(response)
             
