@@ -1,0 +1,58 @@
+name: Deploy Telegram Lambda
+
+on:
+  push:
+    branches:
+      - main   # o la branch que uses para deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write   # necesario para OIDC
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Si tenés requirements.txt, se instalan en /package
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt -t ./package
+          fi
+
+      - name: Build deployment package
+        run: |
+          mkdir -p build
+          # Copy dependencies
+          if [ -d "package" ]; then
+            cp -r package/* build/
+          fi
+          # Copy application files
+          cp lambda_function.py build/
+          cp agent.py build/
+          cp sheets_manager.py build/
+          # Create deployment package
+          cd build
+          zip -r ../deployment.zip .
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --zip-file fileb://deployment.zip \
+            --region ${{ secrets.AWS_REGION }}
