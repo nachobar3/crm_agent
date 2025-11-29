@@ -3,14 +3,14 @@ name: Deploy Telegram Lambda
 on:
   push:
     branches:
-      - main   # o la branch que uses para deploy
+      - main  
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write   # necesario para OIDC
+      id-token: write
       contents: read
 
     steps:
@@ -22,7 +22,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      # Si tenés requirements.txt, se instalan en /package
       - name: Install dependencies
         run: |
           if [ -f requirements.txt ]; then
@@ -50,9 +49,20 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to Lambda
+      - name: Upload to S3
         run: |
+          BUCKET_NAME="lambda-deployments-${{ secrets.AWS_REGION }}"
+          # Create bucket if it doesn't exist
+          aws s3 mb s3://$BUCKET_NAME --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
+          # Upload deployment package
+          aws s3 cp deployment.zip s3://$BUCKET_NAME/telegram-bot/deployment-$(date +%Y%m%d-%H%M%S).zip
+          aws s3 cp deployment.zip s3://$BUCKET_NAME/telegram-bot/deployment-latest.zip
+
+      - name: Deploy to Lambda from S3
+        run: |
+          BUCKET_NAME="lambda-deployments-${{ secrets.AWS_REGION }}"
           aws lambda update-function-code \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --zip-file fileb://deployment.zip \
+            --s3-bucket $BUCKET_NAME \
+            --s3-key telegram-bot/deployment-latest.zip \
             --region ${{ secrets.AWS_REGION }}
