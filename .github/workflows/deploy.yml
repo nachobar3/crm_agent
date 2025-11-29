@@ -22,24 +22,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt -t ./package
-          fi
-
-      - name: Build deployment package
+      - name: Build deployment package (code only)
         run: |
           mkdir -p build
-          # Copy dependencies
-          if [ -d "package" ]; then
-            cp -r package/* build/
-          fi
-          # Copy application files
+          # Copy only application code (dependencies are in Lambda Layers)
           cp lambda_function.py build/
           cp agent.py build/
           cp sheets_manager.py build/
-          # Create deployment package
+          # Create lightweight deployment package
           cd build
           zip -r ../deployment.zip .
 
@@ -49,20 +39,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Upload to S3
+      - name: Deploy to Lambda
         run: |
-          BUCKET_NAME="lambda-deployments-${{ secrets.AWS_REGION }}"
-          # Create bucket if it doesn't exist
-          aws s3 mb s3://$BUCKET_NAME --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
-          # Upload deployment package
-          aws s3 cp deployment.zip s3://$BUCKET_NAME/telegram-bot/deployment-$(date +%Y%m%d-%H%M%S).zip
-          aws s3 cp deployment.zip s3://$BUCKET_NAME/telegram-bot/deployment-latest.zip
-
-      - name: Deploy to Lambda from S3
-        run: |
-          BUCKET_NAME="lambda-deployments-${{ secrets.AWS_REGION }}"
           aws lambda update-function-code \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --s3-bucket $BUCKET_NAME \
-            --s3-key telegram-bot/deployment-latest.zip \
+            --zip-file fileb://deployment.zip \
             --region ${{ secrets.AWS_REGION }}
