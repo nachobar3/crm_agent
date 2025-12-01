@@ -18,6 +18,7 @@ sheets_manager = None
 agent = None
 openai_client = None
 application = None
+application_initialized = False
 
 
 def initialize_components():
@@ -204,12 +205,16 @@ Usa /help para ver más ejemplos.
 
 async def process_update(update_data):
     """Process a single Telegram update"""
+    global application_initialized
+    
     try:
         # Initialize components if needed
         initialize_components()
         
-        # Initialize the application for this request
-        await application.initialize()
+        # Initialize the application only once per Lambda container lifecycle
+        if not application_initialized:
+            await application.initialize()
+            application_initialized = True
         
         # Create Update object from JSON
         update = Update.de_json(update_data, application.bot)

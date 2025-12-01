@@ -10,6 +10,8 @@ from langchain.schema import SystemMessage
 from sheets_manager import SheetsManager
 import json
 import os
+from datetime import datetime
+import pytz
 
 
 class LeadsAgent:
@@ -66,6 +68,52 @@ class LeadsAgent:
             if not results:
                 return "No hay contactos en la base de datos"
             return json.dumps(results, ensure_ascii=False, indent=2)
+        
+        def get_current_datetime_tool(dummy: str = "") -> str:
+            """
+            Get the current date and time. Use this when you need to know what day it is today,
+            or when the user mentions 'today', 'hoy', 'now', 'ahora', or any time-related query.
+            Returns the current date and time in Buenos Aires timezone.
+            """
+            # Get current time in Buenos Aires timezone (Argentina)
+            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            now = datetime.now(argentina_tz)
+            
+            # Format in Spanish
+            day_name = now.strftime('%A')
+            day_names_spanish = {
+                'Monday': 'Lunes',
+                'Tuesday': 'Martes',
+                'Wednesday': 'Miércoles',
+                'Thursday': 'Jueves',
+                'Friday': 'Viernes',
+                'Saturday': 'Sábado',
+                'Sunday': 'Domingo'
+            }
+            day_name_es = day_names_spanish.get(day_name, day_name)
+            
+            month_name = now.strftime('%B')
+            month_names_spanish = {
+                'January': 'Enero',
+                'February': 'Febrero',
+                'March': 'Marzo',
+                'April': 'Abril',
+                'May': 'Mayo',
+                'June': 'Junio',
+                'July': 'Julio',
+                'August': 'Agosto',
+                'September': 'Septiembre',
+                'October': 'Octubre',
+                'November': 'Noviembre',
+                'December': 'Diciembre'
+            }
+            month_name_es = month_names_spanish.get(month_name, month_name)
+            
+            formatted_date = f"{day_name_es}, {now.day} de {month_name_es} de {now.year}"
+            formatted_time = now.strftime('%H:%M:%S')
+            formatted_short = now.strftime('%d/%m/%Y')
+            
+            return f"Fecha actual: {formatted_date}\nHora: {formatted_time}\nFecha formato corto: {formatted_short}"
         
         def update_bio_tool(input_str: str) -> str:
             """
@@ -320,6 +368,11 @@ class LeadsAgent:
                 description="Obtiene todos los contactos de la base de datos. Usa esto cuando necesites ver todos los contactos disponibles."
             ),
             Tool(
+                name="get_current_datetime",
+                func=get_current_datetime_tool,
+                description="Obtiene la fecha y hora actual. SIEMPRE usa esta herramienta cuando el usuario mencione 'hoy', 'today', 'ahora', 'now' o cualquier referencia temporal. OBLIGATORIO usarla antes de guardar fechas en la bitácora o bio."
+            ),
+            Tool(
                 name="update_bio",
                 func=update_bio_tool,
                 description="Actualiza o añade información a la bio de un contacto. Formato: 'nombre|contenido|append'. Ejemplo: 'Pablo Salomón|Tiene dos hijas|true'"
@@ -385,11 +438,19 @@ La base de datos tiene los siguientes campos:
 - bio: Biografía e información personal
 - bitácora: Registro de interacciones y notas
 
+IMPORTANTE - Manejo de fechas y tiempo:
+- SIEMPRE que el usuario mencione "hoy", "today", "ahora", "esta semana" o cualquier referencia temporal, DEBES usar primero la herramienta get_current_datetime
+- Cuando guardes información con referencias temporales (ej: "reunión hoy", "llamada de hoy"), REEMPLAZA "hoy" con la fecha real en formato DD/MM/YYYY
+- Ejemplo: Si el usuario dice "añade a la bitácora de Juan: reunión hoy", primero obtén la fecha actual y luego guarda "reunión el 01/12/2025"
+- NUNCA guardes la palabra "hoy" o "today" sin convertirla a la fecha real
+
 Cuando el usuario te pida agregar información:
-1. Primero busca al contacto por nombre para verificar si existe
-2. Si NO existe y el usuario quiere agregar información: usa add_new_contact para crearlo
-3. Si ya existe: usa las herramientas de actualización apropiadas (update_phone, update_email, update_telegram, etc.)
-4. Confirma al usuario que la operación fue exitosa
+1. Si menciona referencias temporales: primero usa get_current_datetime para obtener la fecha
+2. Busca al contacto por nombre para verificar si existe
+3. Si NO existe y el usuario quiere agregar información: usa add_new_contact para crearlo
+4. Si ya existe: usa las herramientas de actualización apropiadas (update_phone, update_email, update_telegram, etc.)
+5. Al guardar, reemplaza referencias temporales con fechas reales
+6. Confirma al usuario que la operación fue exitosa
 
 Responde siempre en español, de manera sucinta, sin repreguntar ni agregar información no solicitada."""
 

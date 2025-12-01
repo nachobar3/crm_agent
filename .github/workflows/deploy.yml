@@ -22,14 +22,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build deployment package (code only)
+      - name: Build deployment package with dependencies
         run: |
           mkdir -p build
-          # Copy only application code (dependencies are in Lambda Layers)
+          # Install dependencies to build directory
+          pip install -r requirements.txt -t build/
+          # Copy application code
           cp lambda_function.py build/
           cp agent.py build/
           cp sheets_manager.py build/
-          # Create lightweight deployment package
+          cp asociate-f8e54014d9ea.json build/
+          # Create deployment package
           cd build
           zip -r ../deployment.zip .
 

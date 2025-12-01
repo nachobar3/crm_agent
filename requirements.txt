@@ -6,4 +6,5 @@ langchain==0.1.9
 langchain-openai==0.0.5
 python-dotenv==1.0.1
 pydub==0.25.1
+pytz==2024.1
 
