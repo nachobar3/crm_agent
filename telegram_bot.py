@@ -72,6 +72,8 @@ Usa /help para ver más ejemplos.
 ✏️ ACTUALIZACIONES:
 • "Agrega a la bio de [nombre] que [información]"
 • "Actualiza el teléfono de [nombre] a [número]"
+• "Actualiza el email de [nombre] a [email]"
+• "Actualiza el telegram de [nombre] a [usuario]"
 • "Cambia la empresa de [nombre] a [empresa]"
 • "Actualiza el rol de [nombre] a [rol]"
 

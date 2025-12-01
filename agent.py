@@ -95,33 +95,83 @@ class LeadsAgent:
             except Exception as e:
                 return f"Error al actualizar bio: {str(e)}"
         
-        def update_contact_info_tool(input_str: str) -> str:
+        def update_phone_tool(input_str: str) -> str:
             """
-            Update the contact information field of a contact.
-            Input format: 'name|content|append'
+            Update the phone number field of a contact.
+            Input format: 'name|phone'
             - name: The name of the contact
-            - content: The contact information to add (e.g., 'Teléfono: +1234567890')
-            - append: 'true' to append, 'false' to replace (default: true)
+            - phone: The phone number to set
             
-            Example: 'Pablo Salomón|Email: pablo@example.com|true'
+            Example: 'Pablo Salomón|+1234567890'
             """
             try:
                 parts = input_str.split('|')
                 if len(parts) < 2:
-                    return "Error: Formato incorrecto. Usa: 'nombre|contenido|append'"
+                    return "Error: Formato incorrecto. Usa: 'nombre|teléfono'"
                 
                 name = parts[0].strip()
-                content = parts[1].strip()
-                append = parts[2].strip().lower() == 'true' if len(parts) > 2 else True
+                phone = parts[1].strip()
                 
-                success = self.sheets_manager.update_field(name, 'Contacto', content, append=append)
+                success = self.sheets_manager.update_field(name, 'Teléfono', phone, append=False)
                 
                 if success:
-                    return f"Información de contacto actualizada exitosamente para {name}"
+                    return f"Teléfono actualizado exitosamente para {name}"
                 else:
-                    return f"No se pudo actualizar la información de contacto para {name}"
+                    return f"No se pudo actualizar el teléfono para {name}"
             except Exception as e:
-                return f"Error al actualizar contacto: {str(e)}"
+                return f"Error al actualizar teléfono: {str(e)}"
+        
+        def update_email_tool(input_str: str) -> str:
+            """
+            Update the email field of a contact.
+            Input format: 'name|email'
+            - name: The name of the contact
+            - email: The email address to set
+            
+            Example: 'Pablo Salomón|pablo@example.com'
+            """
+            try:
+                parts = input_str.split('|')
+                if len(parts) < 2:
+                    return "Error: Formato incorrecto. Usa: 'nombre|email'"
+                
+                name = parts[0].strip()
+                email = parts[1].strip()
+                
+                success = self.sheets_manager.update_field(name, 'Email', email, append=False)
+                
+                if success:
+                    return f"Email actualizado exitosamente para {name}"
+                else:
+                    return f"No se pudo actualizar el email para {name}"
+            except Exception as e:
+                return f"Error al actualizar email: {str(e)}"
+        
+        def update_telegram_tool(input_str: str) -> str:
+            """
+            Update the Telegram username/handle field of a contact.
+            Input format: 'name|telegram'
+            - name: The name of the contact
+            - telegram: The Telegram username or handle
+            
+            Example: 'Pablo Salomón|@pablosalomon'
+            """
+            try:
+                parts = input_str.split('|')
+                if len(parts) < 2:
+                    return "Error: Formato incorrecto. Usa: 'nombre|telegram'"
+                
+                name = parts[0].strip()
+                telegram = parts[1].strip()
+                
+                success = self.sheets_manager.update_field(name, 'Telegram', telegram, append=False)
+                
+                if success:
+                    return f"Telegram actualizado exitosamente para {name}"
+                else:
+                    return f"No se pudo actualizar el Telegram para {name}"
+            except Exception as e:
+                return f"Error al actualizar Telegram: {str(e)}"
         
         def update_company_tool(input_str: str) -> str:
             """
@@ -199,28 +249,32 @@ class LeadsAgent:
         def add_new_contact_tool(input_str: str) -> str:
             """
             Add a new contact to the database.
-            Input format: 'nombre|contacto|empresa|rol|bio'
+            Input format: 'nombre|teléfono|email|telegram|empresa|rol|bio'
             - nombre: Full name (required)
-            - contacto: Contact information like phone, email, social media (optional)
+            - teléfono: Phone number (optional)
+            - email: Email address (optional)
+            - telegram: Telegram username (optional)
             - empresa: Company name (optional)
             - rol: Role/Position (optional)
             - bio: Biography or personal notes (optional)
             
-            Example: 'Juan Pérez|Tel: +123456789, Email: juan@email.com|Tech Corp|CEO|Fundador de la empresa'
-            Minimum example: 'Juan Pérez||||' (only name required, use empty fields for optional)
+            Example: 'Juan Pérez|+123456789|juan@email.com|@juanperez|Tech Corp|CEO|Fundador de la empresa'
+            Minimum example: 'Juan Pérez||||||' (only name required, use empty fields for optional)
             """
             try:
                 parts = input_str.split('|')
                 if len(parts) < 1:
-                    return "Error: Formato incorrecto. Usa: 'nombre|contacto|empresa|rol|bio'"
+                    return "Error: Formato incorrecto. Usa: 'nombre|teléfono|email|telegram|empresa|rol|bio'"
                 
                 # Extract fields, using empty string for missing optional fields
                 record = {
                     'Nombre': parts[0].strip() if len(parts) > 0 else '',
-                    'Contacto': parts[1].strip() if len(parts) > 1 else '',
-                    'Empresa': parts[2].strip() if len(parts) > 2 else '',
-                    'Rol': parts[3].strip() if len(parts) > 3 else '',
-                    'bio': parts[4].strip() if len(parts) > 4 else '',
+                    'Teléfono': parts[1].strip() if len(parts) > 1 else '',
+                    'Email': parts[2].strip() if len(parts) > 2 else '',
+                    'Telegram': parts[3].strip() if len(parts) > 3 else '',
+                    'Empresa': parts[4].strip() if len(parts) > 4 else '',
+                    'Rol': parts[5].strip() if len(parts) > 5 else '',
+                    'bio': parts[6].strip() if len(parts) > 6 else '',
                     'bitácora': ''
                 }
                 
@@ -271,9 +325,19 @@ class LeadsAgent:
                 description="Actualiza o añade información a la bio de un contacto. Formato: 'nombre|contenido|append'. Ejemplo: 'Pablo Salomón|Tiene dos hijas|true'"
             ),
             Tool(
-                name="update_contact_info",
-                func=update_contact_info_tool,
-                description="Actualiza la información de contacto (teléfono, email, redes sociales, etc.). Formato: 'nombre|info|append'"
+                name="update_phone",
+                func=update_phone_tool,
+                description="Actualiza el número de teléfono de un contacto. Formato: 'nombre|teléfono'"
+            ),
+            Tool(
+                name="update_email",
+                func=update_email_tool,
+                description="Actualiza el email de un contacto. Formato: 'nombre|email'"
+            ),
+            Tool(
+                name="update_telegram",
+                func=update_telegram_tool,
+                description="Actualiza el usuario de Telegram de un contacto. Formato: 'nombre|telegram'"
             ),
             Tool(
                 name="update_company",
@@ -293,7 +357,7 @@ class LeadsAgent:
             Tool(
                 name="add_new_contact",
                 func=add_new_contact_tool,
-                description="Agrega un nuevo contacto a la base de datos. Formato: 'nombre|contacto|empresa|rol|bio'. Solo el nombre es obligatorio. Ejemplo: 'Juan Pérez|Tel: +123|Tech Corp|CEO|Bio aquí'"
+                description="Agrega un nuevo contacto a la base de datos. Formato: 'nombre|teléfono|email|telegram|empresa|rol|bio'. Solo el nombre es obligatorio. Ejemplo: 'Juan Pérez|+123456789|juan@email.com|@juanperez|Tech Corp|CEO|Bio aquí'"
             )
         ]
         
@@ -308,12 +372,14 @@ class LeadsAgent:
 Tu trabajo es ayudar al usuario a:
 1. Buscar información sobre contactos (por nombre, empresa, rol, etc.)
 2. Crear nuevos contactos en la base de datos
-3. Actualizar información de contactos existentes (bio, información de contacto, empresa, rol, etc.)
+3. Actualizar información de contactos existentes (bio, teléfono, email, telegram, empresa, rol, etc.)
 4. Añadir entradas a la bitácora de contactos
 
 La base de datos tiene los siguientes campos:
 - Nombre: Nombre completo del contacto (obligatorio)
-- Contacto: Información de contacto (teléfono, email, redes sociales, etc.)
+- Teléfono: Número de teléfono
+- Email: Dirección de correo electrónico
+- Telegram: Usuario de Telegram
 - Empresa: Empresa donde trabaja
 - Rol: Su rol o posición
 - bio: Biografía e información personal
@@ -322,7 +388,7 @@ La base de datos tiene los siguientes campos:
 Cuando el usuario te pida agregar información:
 1. Primero busca al contacto por nombre para verificar si existe
 2. Si NO existe y el usuario quiere agregar información: usa add_new_contact para crearlo
-3. Si ya existe: usa las herramientas de actualización apropiadas
+3. Si ya existe: usa las herramientas de actualización apropiadas (update_phone, update_email, update_telegram, etc.)
 4. Confirma al usuario que la operación fue exitosa
 
 Responde siempre en español, de manera sucinta, sin repreguntar ni agregar información no solicitada."""

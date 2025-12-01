@@ -100,6 +100,8 @@ Usa /help para ver más ejemplos.
 ✏️ ACTUALIZACIONES:
 • "Agrega a la bio de [nombre] que [info]"
 • "Actualiza el teléfono de [nombre] a [número]"
+• "Actualiza el email de [nombre] a [email]"
+• "Actualiza el telegram de [nombre] a [usuario]"
 
 📝 BITÁCORA:
 • "Añade a la bitácora de [nombre]: [nota]"

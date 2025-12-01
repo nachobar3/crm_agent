@@ -16,11 +16,13 @@ class SheetsManager:
     # Column mapping for the sheet
     COLUMNS = {
         'Nombre': 0,
-        'Contacto': 1,
-        'Empresa': 2,
-        'Rol': 3,
-        'bio': 4,
-        'bitácora': 5
+        'Teléfono': 1,
+        'Email': 2,
+        'Telegram': 3,
+        'Empresa': 4,
+        'Rol': 5,
+        'bio': 6,
+        'bitácora': 7
     }
     
     def __init__(self, credentials_file: str, spreadsheet_id: str):
@@ -189,7 +191,9 @@ class SheetsManager:
             # Prepare the row data in the correct order
             row = [
                 record.get('Nombre', ''),
-                record.get('Contacto', ''),
+                record.get('Teléfono', ''),
+                record.get('Email', ''),
+                record.get('Telegram', ''),
                 record.get('Empresa', ''),
                 record.get('Rol', ''),
                 record.get('bio', ''),

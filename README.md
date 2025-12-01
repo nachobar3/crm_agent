@@ -15,9 +15,9 @@ Sistema inteligente que permite gestionar una base de datos de Leads y Contactos
 
 La Google Sheet debe tener las siguientes columnas:
 
-| Nombre | Contacto | Empresa | Rol | bio | bitácora |
-|--------|----------|---------|-----|-----|----------|
-| Información del contacto | Teléfono, email, redes sociales | Empresa donde trabaja | Posición/Rol | Biografía e info personal | Registro de interacciones |
+| Nombre | Teléfono | Email | Telegram | Empresa | Rol | bio | bitácora |
+|--------|----------|-------|----------|---------|-----|-----|----------|
+| Información del contacto | Número de teléfono | Correo electrónico | Usuario de Telegram | Empresa donde trabaja | Posición/Rol | Biografía e info personal | Registro de interacciones |
 
 ## 🚀 Instalación
 
@@ -97,7 +97,9 @@ Necesitas obtener tu propio archivo JSON:
 
 ## ▶️ Uso
 
-### Iniciar el bot
+### Opción 1: Ejecución Local (Polling Mode)
+
+Para desarrollo o ejecución en tu máquina local:
 
 ```bash
 python main.py
@@ -147,6 +149,8 @@ Añade a Ana Torres, su teléfono es +123456789 y es CFO de StartupXYZ
 ```
 Agrega a la bio de Pablo Salomón que tiene dos hijas llamadas Caia y Mirta
 Actualiza el teléfono de María García a +1234567890
+Actualiza el email de Juan Pérez a juan@example.com
+Actualiza el telegram de Ana Torres a @anatorres
 Cambia la empresa de Juan Pérez a Innovation Labs
 Actualiza el rol de Ana Torres a CTO
 ```
@@ -243,9 +247,11 @@ Agente de IA con las siguientes herramientas:
 - `search_by_company` - Buscar por empresa
 - `search_by_role` - Buscar por rol
 - `get_all_contacts` - Obtener todos los contactos
-- `add_new_contact` - **NUEVO**: Crear nuevos contactos
+- `add_new_contact` - Crear nuevos contactos
 - `update_bio` - Actualizar biografía
-- `update_contact_info` - Actualizar info de contacto
+- `update_phone` - Actualizar teléfono
+- `update_email` - Actualizar email
+- `update_telegram` - Actualizar usuario de Telegram
 - `update_company` - Actualizar empresa
 - `update_role` - Actualizar rol
 - `add_to_log` - Añadir a bitácora
