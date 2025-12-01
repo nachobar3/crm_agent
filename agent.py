@@ -11,7 +11,7 @@ from sheets_manager import SheetsManager
 import json
 import os
 from datetime import datetime
-import pytz
+from zoneinfo import ZoneInfo
 
 
 class LeadsAgent:
@@ -46,28 +46,92 @@ class LeadsAgent:
             results = self.sheets_manager.search_by_name(name)
             if not results:
                 return f"No se encontraron contactos con el nombre '{name}'"
-            return json.dumps(results, ensure_ascii=False, indent=2)
+            
+            # Format results for better readability
+            formatted_results = []
+            for contact in results:
+                formatted = {
+                    'Nombre': contact.get('Nombre', ''),
+                    'Teléfono': contact.get('Teléfono', '') or contact.get('Telefono', '') or 'No registrado',
+                    'Email': contact.get('Email', '') or 'No registrado',
+                    'Telegram': contact.get('Telegram', '') or 'No registrado',
+                    'Empresa': contact.get('Empresa', '') or 'No registrada',
+                    'Rol': contact.get('Rol', '') or 'No registrado',
+                    'bio': contact.get('bio', '') or 'Sin información',
+                    'bitácora': contact.get('bitácora', '') or contact.get('bitacora', '') or 'Sin entradas'
+                }
+                formatted_results.append(formatted)
+            
+            return json.dumps(formatted_results, ensure_ascii=False, indent=2)
         
         def search_by_company_tool(company: str) -> str:
             """Search for contacts by company. Use this when you need to find people from a specific company."""
             results = self.sheets_manager.search_by_field('Empresa', company)
             if not results:
                 return f"No se encontraron contactos de la empresa '{company}'"
-            return json.dumps(results, ensure_ascii=False, indent=2)
+            
+            # Format results for better readability
+            formatted_results = []
+            for contact in results:
+                formatted = {
+                    'Nombre': contact.get('Nombre', ''),
+                    'Teléfono': contact.get('Teléfono', '') or contact.get('Telefono', '') or 'No registrado',
+                    'Email': contact.get('Email', '') or 'No registrado',
+                    'Telegram': contact.get('Telegram', '') or 'No registrado',
+                    'Empresa': contact.get('Empresa', '') or 'No registrada',
+                    'Rol': contact.get('Rol', '') or 'No registrado',
+                    'bio': contact.get('bio', '') or 'Sin información',
+                    'bitácora': contact.get('bitácora', '') or contact.get('bitacora', '') or 'Sin entradas'
+                }
+                formatted_results.append(formatted)
+            
+            return json.dumps(formatted_results, ensure_ascii=False, indent=2)
         
         def search_by_role_tool(role: str) -> str:
             """Search for contacts by role/position. Use this when you need to find people with a specific role."""
             results = self.sheets_manager.search_by_field('Rol', role)
             if not results:
                 return f"No se encontraron contactos con el rol '{role}'"
-            return json.dumps(results, ensure_ascii=False, indent=2)
+            
+            # Format results for better readability
+            formatted_results = []
+            for contact in results:
+                formatted = {
+                    'Nombre': contact.get('Nombre', ''),
+                    'Teléfono': contact.get('Teléfono', '') or contact.get('Telefono', '') or 'No registrado',
+                    'Email': contact.get('Email', '') or 'No registrado',
+                    'Telegram': contact.get('Telegram', '') or 'No registrado',
+                    'Empresa': contact.get('Empresa', '') or 'No registrada',
+                    'Rol': contact.get('Rol', '') or 'No registrado',
+                    'bio': contact.get('bio', '') or 'Sin información',
+                    'bitácora': contact.get('bitácora', '') or contact.get('bitacora', '') or 'Sin entradas'
+                }
+                formatted_results.append(formatted)
+            
+            return json.dumps(formatted_results, ensure_ascii=False, indent=2)
         
         def get_all_contacts_tool(dummy: str = "") -> str:
             """Get all contacts in the database. Use this when you need to see all available contacts."""
             results = self.sheets_manager.get_all_records()
             if not results:
                 return "No hay contactos en la base de datos"
-            return json.dumps(results, ensure_ascii=False, indent=2)
+            
+            # Format results for better readability
+            formatted_results = []
+            for contact in results:
+                formatted = {
+                    'Nombre': contact.get('Nombre', ''),
+                    'Teléfono': contact.get('Teléfono', '') or contact.get('Telefono', '') or 'No registrado',
+                    'Email': contact.get('Email', '') or 'No registrado',
+                    'Telegram': contact.get('Telegram', '') or 'No registrado',
+                    'Empresa': contact.get('Empresa', '') or 'No registrada',
+                    'Rol': contact.get('Rol', '') or 'No registrado',
+                    'bio': contact.get('bio', '') or 'Sin información',
+                    'bitácora': contact.get('bitácora', '') or contact.get('bitacora', '') or 'Sin entradas'
+                }
+                formatted_results.append(formatted)
+            
+            return json.dumps(formatted_results, ensure_ascii=False, indent=2)
         
         def get_current_datetime_tool(dummy: str = "") -> str:
             """
@@ -76,7 +140,8 @@ class LeadsAgent:
             Returns the current date and time in Buenos Aires timezone.
             """
             # Get current time in Buenos Aires timezone (Argentina)
-            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            # Using zoneinfo (Python 3.9+) - no external dependencies needed
+            argentina_tz = ZoneInfo('America/Argentina/Buenos_Aires')
             now = datetime.now(argentina_tz)
             
             # Format in Spanish
@@ -430,13 +495,19 @@ Tu trabajo es ayudar al usuario a:
 
 La base de datos tiene los siguientes campos:
 - Nombre: Nombre completo del contacto (obligatorio)
-- Teléfono: Número de teléfono
-- Email: Dirección de correo electrónico
-- Telegram: Usuario de Telegram
-- Empresa: Empresa donde trabaja
-- Rol: Su rol o posición
-- bio: Biografía e información personal
-- bitácora: Registro de interacciones y notas
+- Teléfono: Número de teléfono (puede estar vacío o decir "No registrado")
+- Email: Dirección de correo electrónico (puede estar vacío o decir "No registrado")
+- Telegram: Usuario de Telegram (puede estar vacío o decir "No registrado")
+- Empresa: Empresa donde trabaja (puede estar vacío o decir "No registrada")
+- Rol: Su rol o posición (puede estar vacío o decir "No registrado")
+- bio: Biografía e información personal (puede estar vacío o decir "Sin información")
+- bitácora: Registro de interacciones y notas (puede estar vacío o decir "Sin entradas")
+
+IMPORTANTE - Presentación de información de contacto:
+- Si un campo dice "No registrado", "No registrada" o "Sin información", menciónalo naturalmente
+- NO digas "no hay información de contacto" si hay al menos UN campo con datos (teléfono, email o telegram)
+- Presenta la información disponible aunque algunos campos estén vacíos
+- Ejemplo: Si solo hay email, di "Email: juan@ejemplo.com. El teléfono y Telegram no están registrados"
 
 IMPORTANTE - Manejo de fechas y tiempo:
 - SIEMPRE que el usuario mencione "hoy", "today", "ahora", "esta semana" o cualquier referencia temporal, DEBES usar primero la herramienta get_current_datetime
