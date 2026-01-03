@@ -44,7 +44,7 @@ def initialize_components():
         
         # Initialize AI Agent
         print("🤖 Initializing AI agent...")
-        agent = LeadsAgent(sheets_manager, openai_api_key)
+        agent = LeadsAgent(sheets_manager, openai_api_key, credentials_file)
         
         # Initialize OpenAI client
         openai_client = OpenAI(api_key=openai_api_key)

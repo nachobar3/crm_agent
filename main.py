@@ -42,7 +42,7 @@ def main():
     
     # Initialize AI Agent
     print("🤖 Inicializando agente de IA...")
-    agent = LeadsAgent(sheets_manager, openai_api_key)
+    agent = LeadsAgent(sheets_manager, openai_api_key, credentials_file)
     
     # Initialize Telegram Bot
     print("📱 Inicializando bot de Telegram...")

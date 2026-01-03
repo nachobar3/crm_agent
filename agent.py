@@ -17,15 +17,27 @@ from zoneinfo import ZoneInfo
 class LeadsAgent:
     """AI Agent that can search and modify leads/contacts in Google Sheets"""
     
-    def __init__(self, sheets_manager: SheetsManager, openai_api_key: str):
+    def __init__(self, sheets_manager: SheetsManager, openai_api_key: str, credentials_file: str = None):
         """
         Initialize the agent
         
         Args:
-            sheets_manager: Instance of SheetsManager
+            sheets_manager: Instance of SheetsManager for leads/contacts
             openai_api_key: OpenAI API key
+            credentials_file: Path to Google credentials file (for migraine sheet)
         """
         self.sheets_manager = sheets_manager
+        self.credentials_file = credentials_file
+        
+        # Initialize migraine sheets manager
+        self.migraine_sheet_id = "1Kp9c47qgiQQgDTdRq9vwkWIZsX7zfeVSTEtVJuy8qmA"
+        self.migraine_manager = None
+        if credentials_file:
+            try:
+                self.migraine_manager = SheetsManager(credentials_file, self.migraine_sheet_id)
+            except Exception as e:
+                print(f"Warning: Could not initialize migraine manager: {e}")
+        
         self.llm = ChatOpenAI(
             temperature=0,
             model="gpt-4o",
@@ -410,6 +422,51 @@ class LeadsAgent:
             except Exception as e:
                 return f"Error al agregar nuevo contacto: {str(e)}"
         
+        def register_migraine_tool(input_str: str) -> str:
+            """
+            Register a migraine episode to the migraine tracking sheet.
+            Input format: 'fecha|intensidad|posible_causa'
+            - fecha: Date in DD/MM/YYYY format (use today's date if user says 'hoy' or 'today')
+            - intensidad: Intensity level (e.g., Baja, Media, Alta)
+            - posible_causa: Possible cause or trigger of the migraine
+            
+            Example: '03/01/2026|Alta|Estrés laboral'
+            
+            IMPORTANT: Always use get_current_datetime tool first if user mentions 'today' or 'hoy'
+            """
+            try:
+                if not self.migraine_manager:
+                    return "Error: El gestor de migrañas no está disponible. Verifica las credenciales."
+                
+                parts = input_str.split('|')
+                if len(parts) < 3:
+                    return "Error: Formato incorrecto. Usa: 'fecha|intensidad|posible_causa'"
+                
+                fecha = parts[0].strip()
+                intensidad = parts[1].strip()
+                posible_causa = parts[2].strip()
+                
+                # Validate that all required fields are provided
+                if not fecha or not intensidad or not posible_causa:
+                    return "Error: Todos los campos son obligatorios (fecha, intensidad, posible causa)"
+                
+                # Create the record
+                record = {
+                    'Fecha': fecha,
+                    'Intensidad': intensidad,
+                    'Posible causa': posible_causa
+                }
+                
+                # Add the record to the migraine sheet
+                success = self.migraine_manager.add_record(record)
+                
+                if success:
+                    return f"✅ Migraña registrada exitosamente:\n- Fecha: {fecha}\n- Intensidad: {intensidad}\n- Posible causa: {posible_causa}"
+                else:
+                    return "No se pudo registrar la migraña. Verifica los permisos de la hoja."
+            except Exception as e:
+                return f"Error al registrar migraña: {str(e)}"
+        
         # Create Tool objects
         tools = [
             Tool(
@@ -476,6 +533,11 @@ class LeadsAgent:
                 name="add_new_contact",
                 func=add_new_contact_tool,
                 description="Agrega un nuevo contacto a la base de datos. Formato: 'nombre|teléfono|email|telegram|empresa|rol|bio'. Solo el nombre es obligatorio. Ejemplo: 'Juan Pérez|+123456789|juan@email.com|@juanperez|Tech Corp|CEO|Bio aquí'"
+            ),
+            Tool(
+                name="register_migraine",
+                func=register_migraine_tool,
+                description="Registra un episodio de migraña en la hoja de seguimiento. Formato: 'fecha|intensidad|posible_causa'. SIEMPRE usa get_current_datetime primero si el usuario menciona 'hoy' o 'today'. Ejemplo: '03/01/2026|Alta|Estrés laboral'"
             )
         ]
         
@@ -485,15 +547,16 @@ class LeadsAgent:
         """Create the agent with tools"""
         
         # System message
-        system_message = """Eres un asistente inteligente que gestiona una base de datos de Leads y Contactos.
+        system_message = """Eres un asistente inteligente que gestiona una base de datos de Leads y Contactos, y también ayuda a registrar episodios de migraña.
 
 Tu trabajo es ayudar al usuario a:
 1. Buscar información sobre contactos (por nombre, empresa, rol, etc.)
 2. Crear nuevos contactos en la base de datos
 3. Actualizar información de contactos existentes (bio, teléfono, email, telegram, empresa, rol, etc.)
 4. Añadir entradas a la bitácora de contactos
+5. Registrar episodios de migraña con fecha, intensidad y posible causa
 
-La base de datos tiene los siguientes campos:
+La base de datos de contactos tiene los siguientes campos:
 - Nombre: Nombre completo del contacto (obligatorio)
 - Teléfono: Número de teléfono (puede estar vacío o decir "No registrado")
 - Email: Dirección de correo electrónico (puede estar vacío o decir "No registrado")
@@ -502,6 +565,11 @@ La base de datos tiene los siguientes campos:
 - Rol: Su rol o posición (puede estar vacío o decir "No registrado")
 - bio: Biografía e información personal (puede estar vacío o decir "Sin información")
 - bitácora: Registro de interacciones y notas (puede estar vacío o decir "Sin entradas")
+
+La hoja de migrañas tiene los siguientes campos:
+- Fecha: Fecha del episodio en formato DD/MM/YYYY (obligatorio)
+- Intensidad: Nivel de intensidad (Baja, Media, Alta, o numérica) (obligatorio)
+- Posible causa: Causa o disparador de la migraña (obligatorio)
 
 IMPORTANTE - Presentación de información de contacto:
 - Si un campo dice "No registrado", "No registrada" o "Sin información", menciónalo naturalmente
@@ -515,7 +583,14 @@ IMPORTANTE - Manejo de fechas y tiempo:
 - Ejemplo: Si el usuario dice "añade a la bitácora de Juan: reunión hoy", primero obtén la fecha actual y luego guarda "reunión el 01/12/2025"
 - NUNCA guardes la palabra "hoy" o "today" sin convertirla a la fecha real
 
-Cuando el usuario te pida agregar información:
+IMPORTANTE - Registro de migrañas:
+- Cuando el usuario mencione palabras como "migraña", "dolor de cabeza", "jaqueca", "cefalea" y pida registrar, usa la herramienta register_migraine
+- SIEMPRE usa get_current_datetime primero si el usuario menciona "hoy", "today" o no especifica fecha
+- Extrae del mensaje del usuario: la intensidad (baja/media/alta o numérica) y la posible causa
+- Si falta alguna información, pregunta al usuario por ella antes de registrar
+- Confirma al usuario que el episodio fue registrado exitosamente
+
+Cuando el usuario te pida agregar información de contactos:
 1. Si menciona referencias temporales: primero usa get_current_datetime para obtener la fecha
 2. Busca al contacto por nombre para verificar si existe
 3. Si NO existe y el usuario quiere agregar información: usa add_new_contact para crearlo

@@ -188,20 +188,19 @@ class SheetsManager:
             True if successful, False otherwise
         """
         try:
-            # Prepare the row data in the correct order
-            row = [
-                record.get('Nombre', ''),
-                record.get('Teléfono', ''),
-                record.get('Email', ''),
-                record.get('Telegram', ''),
-                record.get('Empresa', ''),
-                record.get('Rol', ''),
-                record.get('bio', ''),
-                record.get('bitácora', '')
-            ]
+            # Get the headers from the sheet to know the column order
+            headers = self.sheet.row_values(1)
+            
+            # Prepare the row data in the correct order based on headers
+            row = []
+            for header in headers:
+                row.append(record.get(header, ''))
             
             self.sheet.append_row(row)
-            print(f"Successfully added new record for {record.get('Nombre', 'Unknown')}")
+            
+            # Get identifier for log message (try 'Nombre' first, then 'Fecha', then first field)
+            identifier = record.get('Nombre') or record.get('Fecha') or record.get(headers[0], 'Unknown')
+            print(f"Successfully added new record for {identifier}")
             return True
             
         except Exception as e:
